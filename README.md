@@ -37,6 +37,73 @@ git fetch upstream
 git checkout -b s7/start upstream/s7/start
 ```
 
+## Qué hardware hace falta
+
+Este repositorio es el único de los tres que ejecuta modelos de lenguaje en tu máquina, así
+que es el que marca el requisito. Todo lo de esta tabla está **medido**, no estimado.
+
+| | Mínimo | Cómodo |
+|---|---|---|
+| Memoria (RAM) | 8 GB, cerrando lo que no necesites | 16 GB o más |
+| Disco libre | 8 GB | 12 GB |
+| Tarjeta gráfica | ninguna: sin ella va más despacio, no deja de ir | la que traiga el equipo |
+
+**En qué se va la memoria**, con los tres proyectos levantados: los dos modelos son **2,8 GB**
+(2,4 el de generación y 0,37 el de embeddings), Docker con PostgreSQL ronda **0,8 GB**, y los
+tres servicios juntos no llegan a **0,2 GB**. Total, unos **3,8 GB**. El cuello no suelen ser
+los modelos: es lo que ya tienes abierto al lado.
+
+**Disco:** 2,1 GB de modelos, 640 MB de imagen de PostgreSQL y ~330 MB de dependencias entre
+los tres repositorios.
+
+**Latencias medidas** (MacBook Air M2, con el modelo ya cargado): un embedding tarda entre
+**0,02 y 0,05 s**, así que indexar los 43 fragmentos del blog es cuestión de un par de
+segundos; una respuesta generada tarda **entre 2 y 3 s**. La **primera** petición tras arrancar
+se va a unos **20 s** porque el modelo se está cargando: no está roto, y medir con ella es
+medir la carga.
+
+### Modo ligero, si vas justo de memoria
+
+`MODELO_GENERACION` elige quién redacta las respuestas. Con el modelo pequeño los dos bajan de
+2,8 GB a **1,8 GB**:
+
+```bash
+ollama pull qwen2.5:1.5b-instruct
+```
+
+y en tu `.env`:
+
+```
+MODELO_GENERACION=qwen2.5:1.5b-instruct
+```
+
+Medido: responde **más del doble de rápido** (~1 s frente a ~2,2 s) y redacta igual de bien,
+pero **cita peor las fuentes** — tiende a soltar la respuesta sin el `[n]` del extracto del que
+salió. Para el ejercicio del módulo da igual; si vas a mirar la calidad de las respuestas, no.
+
+> ⚠️ **Lo que NO hay que cambiar es el modelo de embeddings.** `nomic-embed-text` ya es de los
+> más pequeños que dan 768 dimensiones, y es solo el 13% de la huella. Cambiarlo **invalida el
+> índice entero** aunque las dimensiones coincidan, porque son espacios vectoriales distintos:
+> habría que reindexar, y hasta entonces la búsqueda devuelve resultados sin sentido **sin dar
+> ningún error**.
+
+### 🪟 Windows con WSL
+
+**WSL le asigna a Linux la mitad de la memoria del equipo por defecto.** Con 8 GB eso son ~4, y
+el ejercicio va a ir mal. Compruébalo con `free -h` desde tu terminal de Ubuntu. Para
+ampliarlo, crea `C:\Users\<tu-usuario>\.wslconfig` con:
+
+```ini
+[wsl2]
+memory=12GB
+```
+
+y después `wsl --shutdown` desde PowerShell.
+
+Si instalas Ollama en Windows en vez de dentro de WSL, **el proyecto no lo encuentra**: desde
+WSL, `localhost` es la propia Linux. Añade `networkingMode=mirrored` a ese mismo bloque
+`[wsl2]` (necesita Windows 11 22H2 o posterior) y `localhost` ya cruza.
+
 ## Cómo se levanta
 
 Necesita **Docker corriendo** y **Ollama arrancado**. Lo demás lo hace el atajo:
