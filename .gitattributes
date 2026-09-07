@@ -1,0 +1,4 @@
+# El Makefile usa tabuladores y saltos de linea Unix en sus recetas.
+# Sin esto, un clon en Windows lo convierte a CRLF y make deja de funcionar.
+Makefile text eol=lf
+*.sh text eol=lf
