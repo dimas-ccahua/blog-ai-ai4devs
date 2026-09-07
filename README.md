@@ -25,26 +25,58 @@ y la carpeta no, así que **el `git clone` lleva siempre la carpeta destino escr
 git clone git@github.com:<tu-usuario>/blog-ai-ai4devs.git blog-ai
 ```
 
+> 🚨 **En el formulario del fork, DESMARCA la casilla que dice copiar solo la rama por
+> defecto.** Viene marcada, y si la dejas así tu fork se lleva únicamente `main`. La rama de
+> partida se trae del repositorio del curso, que es inmune a eso:
+>
+> ```bash
+> cd blog-ai
+> git remote add upstream git@github.com:LIDR-academy/blog-ai-ai4devs.git
+> git fetch upstream
+> git checkout -b s7/start upstream/s7/start
+> ```
+
 ## Cómo se levanta
 
-Necesita Docker y Ollama corriendo, con los dos modelos ya descargados:
+Necesita **Docker corriendo** y **Ollama arrancado**. Lo demás lo hace el atajo:
+
+```bash
+make setup    # solo la primera vez: modelos, base de datos y dependencias
+make up       # arranca el servicio en http://localhost:8402
+```
+
+`make setup` tarda un rato la primera vez, porque descarga los dos modelos de Ollama (unos
+2,2 GB entre ambos). Es lo único lento de todo el montaje, y solo pasa una vez.
+
+Antes de tocar nada, comprueba cuatro cosas y **falla diciendo cuál**: que la carpeta se
+llama `blog-ai`, que hay un Python 3.11 o superior, que Docker responde y que Ollama contesta.
+Ese orden importa, porque los cuatro fallan con errores que no se parecen a su causa.
+
+> ⚠️ **Sobre todo el de Python, que es el que más caro sale.** En muchas máquinas `python3`
+> apunta al Python del sistema, que es demasiado antiguo, y entonces la instalación de
+> dependencias **falla con un error sobre `psycopg-binary` que no menciona a Python por
+> ningún lado**. Y lo contraintuitivo: **instalar un Python moderno no cambia a qué apunta
+> `python3`**. Por eso `make setup` no usa `python3`: busca `python3.13`, `python3.12` y
+> `python3.11` por su número, y si no encuentra ninguno te dice qué versión tienes y dónde
+> conseguir una buena.
+
+<details>
+<summary>Qué hace <code>make setup</code> por dentro, si prefieres ir a mano</summary>
 
 ```bash
 ollama pull nomic-embed-text        # embeddings (768 dimensiones)
 ollama pull qwen2.5:3b-instruct     # generación
 
 docker compose up -d                # PostgreSQL + pgvector en el puerto 5433
-python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt
+python3.13 -m venv .venv            # con el número puesto, no 'python3' a secas
+./.venv/bin/python -m pip install -r requirements.txt
 cp .env.example .env
-./.venv/bin/python -m uvicorn app.main:app --port 8402
 ```
 
-> ⚠️ **Cuidado con qué Python te da `python3 -m venv`, porque el error no lo dice.** En una
-> máquina donde `python3` resuelve al Python del sistema (3.9), `pip install -r
-> requirements.txt` **falla** con un error sobre `psycopg-binary` que no menciona la versión de
-> Python en ningún sitio. El entorno que funciona se construyó con **Python 3.13**. Si montas
-> el entorno de cero, crea el venv con un intérprete moderno explícito
-> (`python3.13 -m venv .venv`).
+Entre `docker compose up -d` y lo siguiente hay que **esperar** a que PostgreSQL acepte
+conexiones. El atajo espera al `healthcheck` que declara `docker-compose.yml`; a mano, si vas
+demasiado rápido, la primera conexión falla y el error habla de la red, no del arranque.
+</details>
 
 Comprobación:
 

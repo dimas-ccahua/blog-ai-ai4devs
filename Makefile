@@ -93,8 +93,11 @@ db:
 db-parar:
 	docker compose down
 
+# --reload recoge los cambios de app/ sin reiniciar a mano. Va acotado con
+# --reload-dir: sin acotar, el vigilante mira 2300 ficheros y 2241 estan dentro
+# de .venv, que no cambia nunca.
 up:
-	$(VENV)/python -m uvicorn app.main:app --port 8402
+	$(VENV)/python -m uvicorn app.main:app --port 8402 --reload --reload-dir app
 
 contrato:
 	$(VENV)/python scripts/generar_openapi.py --verificar
