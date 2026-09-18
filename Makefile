@@ -19,7 +19,7 @@ MODELO_EMBEDDINGS := nomic-embed-text
 MODELO_GENERACION := qwen2.5:3b-instruct
 CONTENEDOR_DB := blog-ai-postgres
 
-.PHONY: ayuda check setup up modelos db db-parar contrato
+.PHONY: ayuda check setup up modelos db db-parar contrato regla
 
 ayuda:
 	@echo "make check     comprueba Python, Docker y Ollama"
@@ -28,6 +28,7 @@ ayuda:
 	@echo "make db        levanta solo la base de datos (puerto 5433)"
 	@echo "make db-parar  para la base de datos"
 	@echo "make contrato  regenera y verifica el contrato OpenAPI"
+	@echo "make regla     comprueba la regla de comentarios de CLAUDE.md"
 
 check:
 	@if [ "$$(basename $$PWD)" != "$(CARPETA)" ]; then \
@@ -101,3 +102,10 @@ up:
 
 contrato:
 	$(VENV)/python scripts/generar_openapi.py --verificar
+
+# La regla de proceso de CLAUDE.md: toda funcion nueva explica su caso vacio.
+# El mismo comprobador que lanza el hook PostToolUse despues de cada edicion. Va con el
+# Python del sistema, no con el del .venv: solo usa la biblioteca estandar y asi tambien
+# corre antes de 'make setup'.
+regla:
+	@$(PY) .claude/hooks/regla_sin_resultados.py

@@ -132,3 +132,12 @@ def recuentos() -> tuple[int, int]:
         cursor.execute("SELECT COUNT(DISTINCT post_id) AS posts, COUNT(*) AS fragmentos FROM fragmentos")
         fila = cursor.fetchone()
     return int(fila["posts"]), int(fila["fragmentos"])
+
+
+# Sin resultados: devuelve None, no un ResultadoBusqueda vacio ni una excepcion.
+def pruebaReglaFrontera(resultados: list[ResultadoBusqueda], post_id: int) -> ResultadoBusqueda | None:
+    """Busca en `resultados` el que corresponde a `post_id` y lo devuelve."""
+    for resultado in resultados:
+        if resultado.post_id == post_id:
+            return resultado
+    return None
