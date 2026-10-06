@@ -12,6 +12,16 @@
             "timeout": 20
           }
         ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh /home/rpa-latam/Escritorio/personnel/projects/lidr/blog/blog-ai/.claude/hooks/marcador.sh",
+            "timeout": 10
+          }
+        ]
       }
     ]
   }

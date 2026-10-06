@@ -37,3 +37,16 @@ línea.
   `Write`, `Edit` y `Bash`. Si falta algún comentario, sale con código 2 y el aviso vuelve
   a Claude, que tiene que arreglarlo antes de seguir.
 - **A mano:** `make regla`. Sale 0 y en silencio si todo está en orden.
+
+## Regla del repositorio: el contrato público habla español
+
+**Los nombres de campo del contrato público de blog-ai se escriben en español, nunca en
+inglés.**
+
+El contrato público son los modelos Pydantic de `app/esquemas.py` y el artefacto que se
+genera desde ellos, `contrato/openapi.json`. Un campo nuevo se llama `consulta`, `titulo`
+o `puntuacion`, no `query`, `title` o `score`.
+
+La regla es para campos nuevos. Los que ya están publicados no se renombran por ella,
+porque cambiarles el nombre rompe a quien consume el contrato. Tampoco aplica a lo que
+genera FastAPI por su cuenta, como `HTTPValidationError`.
