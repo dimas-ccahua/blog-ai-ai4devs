@@ -83,6 +83,17 @@ class RespuestaPreguntar(BaseModel):
     modelo: str
 
 
+class PeticionResumir(BaseModel):
+    # El tope esta pensado para caber en CONTEXTO_RESUMEN (servicios/generacion.py):
+    # 20 000 caracteres son unos 6 000 tokens. Si se sube uno, hay que subir el otro.
+    texto: str = Field(min_length=20, max_length=20000)
+
+
+class RespuestaResumir(BaseModel):
+    resumen: str
+    modelo: str
+
+
 class RespuestaSalud(BaseModel):
     estado: str
     servicio: str

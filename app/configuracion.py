@@ -15,5 +15,8 @@ class Configuracion(BaseSettings):
     # nomic-embed-text devuelve vectores de 768 dimensiones.
     dimension_embedding: int = 768
 
+    # Llamadas a /resumir que admite cada cliente (por IP) en un minuto.
+    resumir_llamadas_por_minuto: int = 10
+
 
 configuracion = Configuracion()

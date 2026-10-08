@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 
 from app.base_de_datos import preparar_esquema
 from app.configuracion import configuracion
@@ -18,14 +18,21 @@ from app.esquemas import (
     PeticionBuscar,
     PeticionIndexar,
     PeticionPreguntar,
+    PeticionResumir,
     RespuestaBuscar,
     RespuestaIndexar,
     RespuestaPreguntar,
+    RespuestaResumir,
     RespuestaSalud,
 )
 from app.servicios import indice
 from app.servicios.embeddings import ErrorDeOllama, ollama_alcanzable
-from app.servicios.generacion import responder
+from app.servicios.generacion import responder, resumir as generar_resumen
+from app.servicios.limite import LimitadorPorCliente
+
+limitador_resumir = LimitadorPorCliente(
+    llamadas=configuracion.resumir_llamadas_por_minuto, ventana_segundos=60
+)
 
 
 @asynccontextmanager
@@ -106,3 +113,31 @@ async def preguntar(peticion: PeticionPreguntar) -> RespuestaPreguntar:
         ],
         modelo=configuracion.modelo_generacion,
     )
+
+
+# Sin resultados: no aplica, no consulta nada; deja pasar la peticion o responde 429.
+def limitar_resumir(request: Request) -> None:
+    cliente = request.client.host if request.client else "desconocido"
+    espera = limitador_resumir.registrar(cliente)
+    if espera > 0:
+        raise HTTPException(
+            status_code=429,
+            detail="Demasiadas peticiones a /resumir. Espera antes de volver a intentarlo.",
+            headers={"Retry-After": str(int(espera) + 1)},
+        )
+
+
+@app.post(
+    "/resumir",
+    response_model=RespuestaResumir,
+    summary="Resume un texto en dos frases",
+    dependencies=[Depends(limitar_resumir)],
+    responses={429: {"description": "Limite de llamadas por cliente superado"}},
+)
+# Sin resultados: no aplica, no consulta el indice; resume solo el texto recibido.
+async def resumir(peticion: PeticionResumir) -> RespuestaResumir:
+    try:
+        resumen = await generar_resumen(peticion.texto)
+    except ErrorDeOllama as error:
+        raise HTTPException(status_code=503, detail=str(error)) from error
+    return RespuestaResumir(resumen=resumen, modelo=configuracion.modelo_generacion)

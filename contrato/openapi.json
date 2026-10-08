@@ -120,6 +120,21 @@
         "title": "PeticionPreguntar",
         "type": "object"
       },
+      "PeticionResumir": {
+        "properties": {
+          "texto": {
+            "maxLength": 20000,
+            "minLength": 20,
+            "title": "Texto",
+            "type": "string"
+          }
+        },
+        "required": [
+          "texto"
+        ],
+        "title": "PeticionResumir",
+        "type": "object"
+      },
       "PostEntrante": {
         "description": "Un post tal y como lo manda blog-api para indexarlo.",
         "properties": {
@@ -273,6 +288,24 @@
           "modelo"
         ],
         "title": "RespuestaPreguntar",
+        "type": "object"
+      },
+      "RespuestaResumir": {
+        "properties": {
+          "modelo": {
+            "title": "Modelo",
+            "type": "string"
+          },
+          "resumen": {
+            "title": "Resumen",
+            "type": "string"
+          }
+        },
+        "required": [
+          "resumen",
+          "modelo"
+        ],
+        "title": "RespuestaResumir",
         "type": "object"
       },
       "RespuestaSalud": {
@@ -511,6 +544,47 @@
           }
         },
         "summary": "Pregunta al blog (RAG)"
+      }
+    },
+    "/resumir": {
+      "post": {
+        "operationId": "resumir_resumir_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PeticionResumir"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RespuestaResumir"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "429": {
+            "description": "Limite de llamadas por cliente superado"
+          }
+        },
+        "summary": "Resume un texto en dos frases"
       }
     },
     "/salud": {
